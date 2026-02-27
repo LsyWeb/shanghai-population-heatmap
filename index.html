@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上海市人口居住热力分布图</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c14;
+    --panel: #111420;
+    --border: #1e2340;
+    --text: #e8eaf6;
+    --muted: #7b82b0;
+    --accent: #ff6b35;
+    --accent2: #ffd166;
+    --heat1: #1a0533;
+    --heat2: #3d0b6e;
+    --heat3: #7b1fa2;
+    --heat4: #e91e63;
+    --heat5: #ff5722;
+    --heat6: #ff9800;
+    --heat7: #ffeb3b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif SC', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .title-block h1 {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .title-block .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .data-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 260px 1fr 220px;
+    flex: 1;
+    gap: 0;
+  }
+
+  /* Left Panel */
+  .left-panel {
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+  }
+  .panel-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .district-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 2px;
+  }
+  .district-item:hover, .district-item.active {
+    background: rgba(255,107,53,0.08);
+  }
+  .district-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .district-info { flex: 1; min-width: 0; }
+  .district-name {
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .district-pop {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .district-bar-wrap {
+    width: 50px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .district-bar {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  /* Map */
+  .map-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 40% 50%, #0d1235 0%, #0a0c14 70%);
+    overflow: hidden;
+  }
+  .map-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(30,35,64,0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,35,64,0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  svg#map {
+    width: 100%;
+    height: 100%;
+    max-height: calc(100vh - 120px);
+  }
+
+  .district-path {
+    stroke: rgba(255,255,255,0.15);
+    stroke-width: 0.8;
+    cursor: pointer;
+    transition: opacity 0.2s, filter 0.2s;
+  }
+  .district-path:hover {
+    opacity: 0.85;
+    filter: brightness(1.3);
+    stroke: rgba(255,255,255,0.5);
+    stroke-width: 1.5;
+  }
+
+  .map-label {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 8px;
+    fill: rgba(255,255,255,0.75);
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: 700;
+  }
+  .map-label-pop {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6px;
+    fill: rgba(255,255,255,0.45);
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    background: rgba(10,12,20,0.95);
+    border: 1px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    min-width: 180px;
+    z-index: 100;
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip-name {
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .tooltip-val { color: var(--text); }
+
+  /* Right Panel */
+  .right-panel {
+    border-left: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .legend-wrap {}
+  .legend-bar {
+    height: 12px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--heat1), var(--heat2), var(--heat3), var(--heat4), var(--heat5), var(--heat6), var(--heat7));
+    margin: 10px 0 4px;
+  }
+  .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .stat-block { }
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent2);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stat-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 4px 0;
+  }
+
+  .top3 {}
+  .top3-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .top3-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .top3-name { font-weight: 700; flex: 1; }
+  .top3-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 6px 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .note {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>上海市人口居住热力分布图</h1>
+    <div class="subtitle">SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · 2024</div>
+  </div>
+  <div class="data-badge">数据来源：上海统计年鉴 2024</div>
+</header>
+
+<div class="main">
+
+  <!-- Left: District List -->
+  <div class="left-panel">
+    <div class="panel-title">各区常住人口排名</div>
+    <div id="districtList"></div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-container">
+    <svg id="map" viewBox="0 0 600 580" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <!-- Right: Stats -->
+  <div class="right-panel">
+    <div>
+      <div class="panel-title">显示模式</div>
+      <div class="view-toggle">
+        <button class="toggle-btn active" onclick="setMode('population')">常住人口</button>
+        <button class="toggle-btn" onclick="setMode('density')">人口密度</button>
+      </div>
+    </div>
+
+    <div class="legend-wrap">
+      <div class="panel-title" id="legendTitle">人口规模（万人）</div>
+      <div class="legend-bar"></div>
+      <div class="legend-labels">
+        <span id="legendMin">低</span>
+        <span id="legendMax">高</span>
+      </div>
+    </div>
+
+    <hr class="stat-divider">
+
+    <div class="stat-block">
+      <div class="stat-num">2480</div>
+      <div class="stat-label">全市常住人口（万人）</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num">3912</div>
+      <div class="stat-label">平均人口密度（人/km²）</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num">16</div>
+      <div class="stat-label">行政区数量</div>
+    </div>
+
+    <hr class="stat-divider">
+
+    <div class="top3">
+      <div class="panel-title" id="top3Title">人口最多 TOP 3</div>
+      <div id="top3List"></div>
+    </div>
+
+    <div class="note">
+      * 数据来自2024年上海市统计年鉴及各区统计公报<br>
+      * 热力颜色深浅反映各区人口/密度相对高低<br>
+      * 点击区域或列表查看详细数据
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const districts = [
+  { id: 'pudong',   name: '浦东新区', pop: 568.2, area: 1210,  cx: 420, cy: 310, paths: true },
+  { id: 'minhang', name: '闵行区',   pop: 272.5, area: 373,   cx: 230, cy: 400, paths: true },
+  { id: 'baoshan', name: '宝山区',   pop: 228.0, area: 365,   cx: 220, cy: 160, paths: true },
+  { id: 'songjiang',name:'松江区',   pop: 208.0, area: 605,   cx: 130, cy: 450, paths: true },
+  { id: 'jiading', name: '嘉定区',   pop: 198.0, area: 464,   cx: 140, cy: 240, paths: true },
+  { id: 'qingpu',  name: '青浦区',   pop: 140.0, area: 668,   cx: 60,  cy: 370, paths: true },
+  { id: 'putuo',   name: '普陀区',   pop: 133.0, area: 55,    cx: 220, cy: 270, paths: true },
+  { id: 'yangpu',  name: '杨浦区',   pop: 132.0, area: 61,    cx: 310, cy: 215, paths: true },
+  { id: 'fengxian',name: '奉贤区',   pop: 120.0, area: 687,   cx: 200, cy: 510, paths: true },
+  { id: 'xuhui',   name: '徐汇区',   pop: 117.0, area: 55,    cx: 255, cy: 345, paths: true },
+  { id: 'jingan',  name: '静安区',   pop: 108.0, area: 37,    cx: 248, cy: 295, paths: true },
+  { id: 'jinshan', name: '金山区',   pop:  80.0, area: 586,   cx: 100, cy: 520, paths: true },
+  { id: 'hongkou', name: '虹口区',   pop:  76.0, area: 23,    cx: 285, cy: 245, paths: true },
+  { id: 'changning',name:'长宁区',   pop:  69.3, area: 37,    cx: 205, cy: 315, paths: true },
+  { id: 'chongming',name:'崇明区',   pop:  70.4, area: 1413,  cx: 370, cy: 80,  paths: true },
+  { id: 'huangpu', name: '黄浦区',   pop:  50.3, area: 20,    cx: 280, cy: 300, paths: true },
+];
+
+// Simplified but geographically faithful polygon shapes for Shanghai districts
+// Coordinates scaled to fit 600x580 viewBox
+const polygons = {
+  chongming: "340,30 480,25 520,60 500,100 460,115 400,120 340,105 310,80 325,50",
+  baoshan:   "170,130 250,120 295,135 305,170 295,210 265,225 220,220 180,200 155,175 150,150",
+  jiading:   "60,160 150,150 180,200 165,255 140,275 100,280 60,265 45,230 50,195",
+  qingpu:    "20,290 100,280 140,275 140,320 120,360 80,390 30,410 15,375 10,335",
+  putuo:     "190,240 265,225 295,240 305,270 285,295 245,300 210,290 190,265",
+  changning: "160,295 210,290 245,300 248,330 225,350 190,350 160,335 155,315",
+  jingan:    "245,270 295,260 310,280 305,305 280,310 248,305 240,290",
+  hongkou:   "275,215 310,210 330,230 325,255 300,265 270,255 262,238",
+  yangpu:    "290,190 340,185 370,200 370,230 345,255 325,255 300,265 275,250 278,225",
+  huangpu:   "268,285 295,275 315,285 318,310 300,325 272,320 262,308",
+  xuhui:     "225,325 268,310 300,325 298,360 270,380 235,375 215,355 218,335",
+  pudong:    "310,190 380,175 440,180 490,210 520,255 540,310 530,370 500,420 460,460 420,480 380,475 340,450 305,415 295,375 300,335 310,295 308,255 295,225",
+  minhang:   "155,365 215,355 270,380 298,360 305,415 295,445 260,470 210,475 165,460 140,430 140,400 150,380",
+  songjiang: "60,395 140,400 140,430 165,460 155,500 115,520 70,525 40,505 30,470 35,430 50,410",
+  fengxian:  "155,460 210,475 260,470 295,445 320,475 310,520 275,545 225,555 175,545 140,515 135,490 145,470",
+  jinshan:   "55,490 115,480 140,515 135,490 115,520 90,545 55,545 30,525 25,500 35,490",
+};
+
+let currentMode = 'population';
+
+function getHeatColor(normalized) {
+  // 0 → deep purple, 1 → bright yellow
+  const stops = [
+    [0.00, [26,  5, 51]],
+    [0.15, [61, 11,110]],
+    [0.30, [123,31,162]],
+    [0.45, [233,30,99]],
+    [0.60, [255,87,34]],
+    [0.78, [255,152,0]],
+    [1.00, [255,235,59]],
+  ];
+  let lo = stops[0], hi = stops[stops.length-1];
+  for(let i=0;i<stops.length-1;i++){
+    if(normalized <= stops[i+1][0]){ lo=stops[i]; hi=stops[i+1]; break; }
+  }
+  const t = (normalized - lo[0]) / (hi[0] - lo[0]);
+  const r = Math.round(lo[1][0] + (hi[1][0]-lo[1][0])*t);
+  const g = Math.round(lo[1][1] + (hi[1][1]-lo[1][1])*t);
+  const b = Math.round(lo[1][2] + (hi[1][2]-lo[1][2])*t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function getDensities() {
+  return districts.map(d => d.pop * 10000 / d.area);
+}
+
+function getNormalized(mode) {
+  const vals = mode === 'population'
+    ? districts.map(d => d.pop)
+    : getDensities();
+  const min = Math.min(...vals), max = Math.max(...vals);
+  return districts.map((d, i) => (vals[i] - min) / (max - min));
+}
+
+function renderMap(mode) {
+  const svg = document.getElementById('map');
+  svg.innerHTML = '';
+
+  const norms = getNormalized(mode);
+  const densities = getDensities();
+
+  // Draw polygons
+  districts.forEach((d, i) => {
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    poly.setAttribute('points', polygons[d.id]);
+    poly.setAttribute('fill', getHeatColor(norms[i]));
+    poly.setAttribute('class', 'district-path');
+    poly.setAttribute('data-id', d.id);
+
+    poly.addEventListener('mouseenter', (e) => showTooltip(e, d, densities[i]));
+    poly.addEventListener('mousemove', (e) => moveTooltip(e));
+    poly.addEventListener('mouseleave', hideTooltip);
+    poly.addEventListener('click', () => highlightDistrict(d.id));
+    svg.appendChild(poly);
+
+    // Label
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', d.cx);
+    text.setAttribute('y', d.cy - 4);
+    text.setAttribute('class', 'map-label');
+    text.textContent = d.name.replace('区','').replace('新区','');
+    svg.appendChild(text);
+
+    const textPop = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    textPop.setAttribute('x', d.cx);
+    textPop.setAttribute('y', d.cy + 8);
+    textPop.setAttribute('class', 'map-label-pop');
+    const val = mode === 'population'
+      ? d.pop.toFixed(1) + '万'
+      : Math.round(densities[i]).toLocaleString() + '/km²';
+    textPop.textContent = val;
+    svg.appendChild(textPop);
+  });
+}
+
+function renderList(mode) {
+  const densities = getDensities();
+  const sorted = [...districts].sort((a, b) => {
+    return mode === 'population'
+      ? b.pop - a.pop
+      : (b.pop * 10000 / b.area) - (a.pop * 10000 / a.area);
+  });
+  const vals = mode === 'population'
+    ? districts.map(d => d.pop)
+    : densities;
+  const maxVal = Math.max(...vals);
+  const norms = getNormalized(mode);
+
+  const list = document.getElementById('districtList');
+  list.innerHTML = '';
+  sorted.forEach((d, rank) => {
+    const idx = districts.findIndex(x => x.id === d.id);
+    const norm = norms[idx];
+    const color = getHeatColor(norm);
+    const val = mode === 'population'
+      ? d.pop.toFixed(1) + ' 万人'
+      : Math.round(densities[idx]).toLocaleString() + ' /km²';
+    const barPct = mode === 'population'
+      ? (d.pop / Math.max(...districts.map(x=>x.pop))) * 100
+      : (densities[idx] / Math.max(...densities)) * 100;
+
+    const item = document.createElement('div');
+    item.className = 'district-item';
+    item.setAttribute('data-id', d.id);
+    item.innerHTML = `
+      <div class="district-color" style="background:${color}"></div>
+      <div class="district-info">
+        <div class="district-name">${rank+1}. ${d.name}</div>
+        <div class="district-pop">${val}</div>
+      </div>
+      <div class="district-bar-wrap">
+        <div class="district-bar" style="width:${barPct}%;background:${color}"></div>
+      </div>
+    `;
+    item.addEventListener('click', () => highlightDistrict(d.id));
+    list.appendChild(item);
+  });
+
+  // Top3
+  const top3 = document.getElementById('top3List');
+  top3.innerHTML = '';
+  sorted.slice(0,3).forEach((d, i) => {
+    const idx = districts.findIndex(x => x.id === d.id);
+    const val = mode === 'population'
+      ? d.pop.toFixed(1) + ' 万'
+      : Math.round(densities[idx]).toLocaleString() + '/km²';
+    top3.innerHTML += `
+      <div class="top3-item">
+        <span class="top3-rank">#${i+1}</span>
+        <span class="top3-name">${d.name}</span>
+        <span class="top3-val">${val}</span>
+      </div>`;
+  });
+
+  document.getElementById('top3Title').textContent = mode === 'population' ? '人口最多 TOP 3' : '密度最高 TOP 3';
+  document.getElementById('legendTitle').textContent = mode === 'population' ? '人口规模（万人）' : '人口密度（人/km²）';
+
+  const allVals = mode === 'population' ? districts.map(d=>d.pop) : densities;
+  document.getElementById('legendMin').textContent = Math.round(Math.min(...allVals)) + (mode==='population'?' 万':'');
+  document.getElementById('legendMax').textContent = Math.round(Math.max(...allVals)) + (mode==='population'?' 万':'');
+}
+
+function highlightDistrict(id) {
+  document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
+  const item = document.querySelector(`.district-item[data-id="${id}"]`);
+  if(item){ item.classList.add('active'); item.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+}
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+const densities = getDensities();
+
+function showTooltip(e, d, density) {
+  const rank = [...districts].sort((a,b) => b.pop-a.pop).findIndex(x=>x.id===d.id)+1;
+  tooltip.innerHTML = `
+    <div class="tooltip-name">${d.name}</div>
+    <div class="tooltip-row"><span>常住人口</span><span class="tooltip-val">${d.pop.toFixed(1)} 万人</span></div>
+    <div class="tooltip-row"><span>辖区面积</span><span class="tooltip-val">${d.area} km²</span></div>
+    <div class="tooltip-row"><span>人口密度</span><span class="tooltip-val">${Math.round(density).toLocaleString()} 人/km²</span></div>
+    <div class="tooltip-row"><span>人口排名</span><span class="tooltip-val">第 ${rank} 位</span></div>
+  `;
+  tooltip.classList.add('show');
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  const rect = e.currentTarget.closest('.map-container').getBoundingClientRect();
+  let x = e.clientX - rect.left + 14;
+  let y = e.clientY - rect.top - 10;
+  if(x + 200 > rect.width) x -= 210;
+  if(y + 160 > rect.height) y -= 160;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+function hideTooltip() { tooltip.classList.remove('show'); }
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderMap(mode);
+  renderList(mode);
+}
+
+// Init
+renderMap('population');
+renderList('population');
+</script>
+</body>
+</html>
