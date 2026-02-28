@@ -621,7 +621,6 @@ function highlightDistrict(id) {
 
 // Tooltip
 const tooltip = document.getElementById('tooltip');
-const densities = getDensities();
 
 function showTooltip(e, d, density) {
   const rank = [...districts].sort((a,b) => getPop(b)-getPop(a)).findIndex(x=>x.id===d.id)+1;
@@ -669,7 +668,9 @@ function setYear(year, e) {
   document.querySelector('.subtitle').textContent =
     `SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · ${year}`;
   document.querySelector('.data-badge').textContent =
-    `数据来源：上海统计年鉴 ${year}`;
+    year === '2025'
+      ? '数据来源：各区2024年统计公报'
+      : `数据来源：上海统计年鉴 ${year}`;
   renderMap(currentMode);
   renderList(currentMode);
   updateStats();
