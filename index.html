@@ -436,7 +436,7 @@ const yearData = {
 let currentYear = '2024';
 
 function getPop(d) {
-  return yearData[currentYear][d.id];
+  return (yearData[currentYear] ?? yearData['2024'])[d.id];
 }
 
 // Simplified but geographically faithful polygon shapes for Shanghai districts
