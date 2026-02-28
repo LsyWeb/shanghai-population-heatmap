@@ -485,12 +485,12 @@ function getHeatColor(normalized) {
 }
 
 function getDensities() {
-  return districts.map(d => d.pop * 10000 / d.area);
+  return districts.map(d => getPop(d) * 10000 / d.area);
 }
 
 function getNormalized(mode) {
   const vals = mode === 'population'
-    ? districts.map(d => d.pop)
+    ? districts.map(d => getPop(d))
     : getDensities();
   const min = Math.min(...vals), max = Math.max(...vals);
   return districts.map((d, i) => (vals[i] - min) / (max - min));
@@ -530,7 +530,7 @@ function renderMap(mode) {
     textPop.setAttribute('y', d.cy + 8);
     textPop.setAttribute('class', 'map-label-pop');
     const val = mode === 'population'
-      ? d.pop.toFixed(1) + '万'
+      ? getPop(d).toFixed(1) + '万'
       : Math.round(densities[i]).toLocaleString() + '/km²';
     textPop.textContent = val;
     svg.appendChild(textPop);
@@ -541,11 +541,11 @@ function renderList(mode) {
   const densities = getDensities();
   const sorted = [...districts].sort((a, b) => {
     return mode === 'population'
-      ? b.pop - a.pop
-      : (b.pop * 10000 / b.area) - (a.pop * 10000 / a.area);
+      ? getPop(b) - getPop(a)
+      : (getPop(b) * 10000 / b.area) - (getPop(a) * 10000 / a.area);
   });
   const vals = mode === 'population'
-    ? districts.map(d => d.pop)
+    ? districts.map(d => getPop(d))
     : densities;
   const maxVal = Math.max(...vals);
   const norms = getNormalized(mode);
@@ -557,10 +557,10 @@ function renderList(mode) {
     const norm = norms[idx];
     const color = getHeatColor(norm);
     const val = mode === 'population'
-      ? d.pop.toFixed(1) + ' 万人'
+      ? getPop(d).toFixed(1) + ' 万人'
       : Math.round(densities[idx]).toLocaleString() + ' /km²';
     const barPct = mode === 'population'
-      ? (d.pop / Math.max(...districts.map(x=>x.pop))) * 100
+      ? (getPop(d) / Math.max(...districts.map(x => getPop(x)))) * 100
       : (densities[idx] / Math.max(...densities)) * 100;
 
     const item = document.createElement('div');
@@ -586,8 +586,8 @@ function renderList(mode) {
   sorted.slice(0,3).forEach((d, i) => {
     const idx = districts.findIndex(x => x.id === d.id);
     const val = mode === 'population'
-      ? d.pop.toFixed(1) + ' 万'
-      : Math.round(densities[idx]).toLocaleString() + '/km²';
+        ? getPop(d).toFixed(1) + ' 万'
+        : Math.round(densities[idx]).toLocaleString() + '/km²';
     top3.innerHTML += `
       <div class="top3-item">
         <span class="top3-rank">#${i+1}</span>
@@ -599,7 +599,7 @@ function renderList(mode) {
   document.getElementById('top3Title').textContent = mode === 'population' ? '人口最多 TOP 3' : '密度最高 TOP 3';
   document.getElementById('legendTitle').textContent = mode === 'population' ? '人口规模（万人）' : '人口密度（人/km²）';
 
-  const allVals = mode === 'population' ? districts.map(d=>d.pop) : densities;
+  const allVals = mode === 'population' ? districts.map(d => getPop(d)) : densities;
   document.getElementById('legendMin').textContent = Math.round(Math.min(...allVals)) + (mode==='population'?' 万':'');
   document.getElementById('legendMax').textContent = Math.round(Math.max(...allVals)) + (mode==='population'?' 万':'');
 }
@@ -615,10 +615,10 @@ const tooltip = document.getElementById('tooltip');
 const densities = getDensities();
 
 function showTooltip(e, d, density) {
-  const rank = [...districts].sort((a,b) => b.pop-a.pop).findIndex(x=>x.id===d.id)+1;
+  const rank = [...districts].sort((a,b) => getPop(b)-getPop(a)).findIndex(x=>x.id===d.id)+1;
   tooltip.innerHTML = `
     <div class="tooltip-name">${d.name}</div>
-    <div class="tooltip-row"><span>常住人口</span><span class="tooltip-val">${d.pop.toFixed(1)} 万人</span></div>
+    <div class="tooltip-row"><span>常住人口</span><span class="tooltip-val">${getPop(d).toFixed(1)} 万人</span></div>
     <div class="tooltip-row"><span>辖区面积</span><span class="tooltip-val">${d.area} km²</span></div>
     <div class="tooltip-row"><span>人口密度</span><span class="tooltip-val">${Math.round(density).toLocaleString()} 人/km²</span></div>
     <div class="tooltip-row"><span>人口排名</span><span class="tooltip-val">第 ${rank} 位</span></div>
