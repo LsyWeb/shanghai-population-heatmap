@@ -11,13 +11,14 @@
 
 ## 项目简介 | About
 
-交互式上海各区人口居住热力分布可视化，数据来源为 2024 年上海统计年鉴。支持按常住人口和人口密度两种维度切换查看，点击区域或左侧列表可高亮对应区域。
+交互式上海各区人口居住热力分布可视化，支持 2023 年末与 2024 年末两组常住人口数据对比。可按常住人口和人口密度两种维度切换查看，点击区域或左侧列表可高亮对应区域。
 
-An interactive heatmap visualization of Shanghai's population residential density by district, based on the 2024 Shanghai Statistical Yearbook. Supports switching between total population and population density views.
+An interactive heatmap visualization of Shanghai's population residential density by district. Supports comparing 2023 year-end and 2024 year-end resident population data, with switching between total population and population density views.
 
 ## 功能特性 | Features
 
 - 🗺️ **热力色阶地图**：深紫 → 明黄，直观反映人口 / 密度高低
+- 📅 **双年份切换**：2023 年末 / 2024 年末数据对比
 - 🔄 **双模式切换**：常住人口（万人）/ 人口密度（人/km²）
 - 💬 **交互 Tooltip**：悬停显示各区详细数据
 - 📋 **左侧排名列表**：点击高亮对应区域
@@ -25,9 +26,10 @@ An interactive heatmap visualization of Shanghai's population residential densit
 
 ## 数据来源 | Data Source
 
-- 上海市统计年鉴 2024
-- 各区统计公报
-- Shanghai Statistical Yearbook 2024
+| 年份 | 数据来源 |
+|------|---------|
+| 2023 年末 | 上海市统计年鉴 2024 |
+| 2024 年末 | 各区 2024 年国民经济和社会发展统计公报 |
 
 ## 本地运行 | Run Locally
 
