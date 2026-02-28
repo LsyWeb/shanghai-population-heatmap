@@ -324,9 +324,9 @@
 <header>
   <div class="title-block">
     <h1>上海市人口居住热力分布图</h1>
-    <div class="subtitle">SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · 2024</div>
+    <div class="subtitle">SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · 2023年末</div>
   </div>
-  <div class="data-badge">数据来源：上海统计年鉴 2024</div>
+  <div class="data-badge">数据来源：上海统计年鉴 2024（2023年末数据）</div>
 </header>
 
 <div class="main">
@@ -348,8 +348,8 @@
     <div>
       <div class="panel-title">年份</div>
       <div class="view-toggle" id="yearToggle">
-        <button class="toggle-btn active" onclick="setYear('2024', event)">2024</button>
-        <button class="toggle-btn" onclick="setYear('2025', event)">2025</button>
+        <button class="toggle-btn active" onclick="setYear('2023', event)">2023年末</button>
+        <button class="toggle-btn" onclick="setYear('2024', event)">2024年末</button>
       </div>
     </div>
 
@@ -393,8 +393,8 @@
     </div>
 
     <div class="note">
-      * 2024年数据来自上海统计年鉴2024<br>
-      * 2025年数据来自各区2024年统计公报<br>
+      * 2023年末数据来自上海统计年鉴2024<br>
+      * 2024年末数据来自各区2024年统计公报<br>
       * 热力颜色深浅反映各区人口/密度相对高低<br>
       * 点击区域或列表查看详细数据
     </div>
@@ -424,7 +424,7 @@ const districts = [
 
 // ============ YEAR DATA ============
 const yearData = {
-  '2024': {
+  '2023': {
     pudong:    568.2,  minhang:   272.5,  baoshan:   228.0,
     songjiang: 208.0,  jiading:   198.0,  qingpu:    140.0,
     putuo:     133.0,  yangpu:    132.0,  fengxian:  120.0,
@@ -432,7 +432,7 @@ const yearData = {
     hongkou:    76.0,  changning:  69.3,  chongming:  70.4,
     huangpu:    50.3,
   },
-  '2025': {
+  '2024': {
     pudong:    578.58, minhang:   272.50, baoshan:   226.39,
     songjiang: 195.89, jiading:   189.04, qingpu:    128.77,
     putuo:     124.87, yangpu:    119.97, fengxian:  113.95,
@@ -442,10 +442,10 @@ const yearData = {
   },
 };
 
-let currentYear = '2024';
+let currentYear = '2023';
 
 function getPop(d) {
-  return (yearData[currentYear] ?? yearData['2024'])[d.id];
+  return (yearData[currentYear] ?? yearData['2023'])[d.id];
 }
 
 // Simplified but geographically faithful polygon shapes for Shanghai districts
@@ -666,11 +666,11 @@ function setYear(year, e) {
   document.querySelectorAll('#yearToggle .toggle-btn').forEach(b => b.classList.remove('active'));
   e.target.classList.add('active');
   document.querySelector('.subtitle').textContent =
-    `SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · ${year}`;
+    `SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · ${year}年末`;
   document.querySelector('.data-badge').textContent =
-    year === '2025'
-      ? '数据来源：各区2024年统计公报'
-      : `数据来源：上海统计年鉴 ${year}`;
+    year === '2024'
+      ? '数据来源：各区2024年统计公报（2024年末数据）'
+      : '数据来源：上海统计年鉴 2024（2023年末数据）';
   renderMap(currentMode);
   renderList(currentMode);
   updateStats();
