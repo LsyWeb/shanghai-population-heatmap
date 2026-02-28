@@ -641,7 +641,7 @@ function updateStats() {
   const totalPop = districts.reduce((sum, d) => sum + getPop(d), 0);
   const totalArea = districts.reduce((sum, d) => sum + d.area, 0);
   const avgDensity = totalPop * 10000 / totalArea;
-  document.getElementById('statTotalPop').textContent = Math.round(totalPop);
+  document.getElementById('statTotalPop').textContent = Math.round(totalPop).toLocaleString();
   document.getElementById('statAvgDensity').textContent = Math.round(avgDensity).toLocaleString();
 }
 
