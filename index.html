@@ -348,16 +348,16 @@
     <div>
       <div class="panel-title">年份</div>
       <div class="view-toggle" id="yearToggle">
-        <button class="toggle-btn active" onclick="setYear('2024')">2024</button>
-        <button class="toggle-btn" onclick="setYear('2025')">2025</button>
+        <button class="toggle-btn active" onclick="setYear('2024', event)">2024</button>
+        <button class="toggle-btn" onclick="setYear('2025', event)">2025</button>
       </div>
     </div>
 
     <div>
       <div class="panel-title">显示模式</div>
-      <div class="view-toggle">
-        <button class="toggle-btn active" onclick="setMode('population')">常住人口</button>
-        <button class="toggle-btn" onclick="setMode('density')">人口密度</button>
+      <div class="view-toggle" id="modeToggle">
+        <button class="toggle-btn active" onclick="setMode('population', event)">常住人口</button>
+        <button class="toggle-btn" onclick="setMode('density', event)">人口密度</button>
       </div>
     </div>
 
@@ -653,18 +653,18 @@ function updateStats() {
   document.getElementById('statAvgDensity').textContent = Math.round(avgDensity).toLocaleString();
 }
 
-function setMode(mode) {
+function setMode(mode, e) {
   currentMode = mode;
-  document.querySelectorAll('.view-toggle:not(#yearToggle) .toggle-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('#modeToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
   renderMap(mode);
   renderList(mode);
 }
 
-function setYear(year) {
+function setYear(year, e) {
   currentYear = year;
   document.querySelectorAll('#yearToggle .toggle-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  e.target.classList.add('active');
   document.querySelector('.subtitle').textContent =
     `SHANGHAI POPULATION RESIDENTIAL DENSITY MAP · ${year}`;
   document.querySelector('.data-badge').textContent =
