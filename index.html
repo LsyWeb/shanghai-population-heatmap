@@ -365,11 +365,11 @@
     <hr class="stat-divider">
 
     <div class="stat-block">
-      <div class="stat-num">2480</div>
+      <div class="stat-num" id="statTotalPop">2480</div>
       <div class="stat-label">全市常住人口（万人）</div>
     </div>
     <div class="stat-block">
-      <div class="stat-num">3912</div>
+      <div class="stat-num" id="statAvgDensity">3912</div>
       <div class="stat-label">平均人口密度（人/km²）</div>
     </div>
     <div class="stat-block">
@@ -637,6 +637,14 @@ function moveTooltip(e) {
 }
 function hideTooltip() { tooltip.classList.remove('show'); }
 
+function updateStats() {
+  const totalPop = districts.reduce((sum, d) => sum + getPop(d), 0);
+  const totalArea = districts.reduce((sum, d) => sum + d.area, 0);
+  const avgDensity = totalPop * 10000 / totalArea;
+  document.getElementById('statTotalPop').textContent = Math.round(totalPop);
+  document.getElementById('statAvgDensity').textContent = Math.round(avgDensity).toLocaleString();
+}
+
 function setMode(mode) {
   currentMode = mode;
   document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
@@ -648,6 +656,7 @@ function setMode(mode) {
 // Init
 renderMap('population');
 renderList('population');
+updateStats();
 </script>
 </body>
 </html>
